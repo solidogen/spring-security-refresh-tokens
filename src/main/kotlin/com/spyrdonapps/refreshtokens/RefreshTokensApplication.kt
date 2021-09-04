@@ -11,7 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @SpringBootApplication
-class RefreshtokensApplication {
+class RefreshTokensApplication {
 
 	@Bean
 	fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -39,5 +39,5 @@ class RefreshtokensApplication {
 }
 
 fun main(args: Array<String>) {
-	runApplication<RefreshtokensApplication>(*args)
+	runApplication<RefreshTokensApplication>(*args)
 }
