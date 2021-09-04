@@ -30,6 +30,7 @@ class SecurityConfig(
             customAuthenticationFilter.setFilterProcessesUrl("/api/login/**") // this actually overrides spring's default /login to /api/login
             csrf().disable()
             sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            authorizeRequests().antMatchers("/api/login", "/api/token/refresh").permitAll() // todo - does this even do anything? doesn't seem like
             authorizeRequests().antMatchers(HttpMethod.GET, "/api/user/**").hasAnyAuthority("ROLE_USER")
             authorizeRequests().antMatchers(HttpMethod.POST, "/api/user/save/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPERADMIN")
             authorizeRequests().anyRequest().authenticated()

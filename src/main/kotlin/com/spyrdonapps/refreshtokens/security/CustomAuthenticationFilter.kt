@@ -1,8 +1,6 @@
 package com.spyrdonapps.refreshtokens.security
 
 import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -19,11 +17,8 @@ import javax.servlet.http.HttpServletResponse
 class CustomAuthenticationFilter(authenticationManager: AuthenticationManager) :
     UsernamePasswordAuthenticationFilter(authenticationManager) {
 
-    private val objectMapper = jacksonObjectMapper()
-
     override fun attemptAuthentication(request: HttpServletRequest, response: HttpServletResponse): Authentication {
         // todo try to receive json body instead, use object mapper (jackson)
-
         val username = request.getParameter("username")
         val password = request.getParameter("password")
         val authenticationToken = UsernamePasswordAuthenticationToken(username, password)
@@ -43,23 +38,25 @@ class CustomAuthenticationFilter(authenticationManager: AuthenticationManager) :
             .withExpiresAt(Instant.now().plus(Duration.ofMinutes(ACCESS_TOKEN_VALIDITY_MINUTES)).let { Date.from(it) })
             .withIssuer(request.requestURL.toString())
             .withClaim("roles", user.authorities.map { it.authority })
+            .withClaim("token_type", "access") // todo is this fine? I guess I should encrypt this value
             .sign(algorithm)
         val refreshToken = JWT.create()
             .withSubject(user.username)
             .withExpiresAt(Instant.now().plus(Duration.ofMinutes(REFRESH_TOKEN_VALIDITY_MINUTES)).let { Date.from(it) })
             .withIssuer(request.requestURL.toString())
-            .withClaim("roles", user.authorities.map { it.authority })
+            .withClaim("roles", user.authorities.map { it.authority }) // todo - this lets user use api with refresh_token, change this to empty
+            .withClaim("token_type", "refresh") // todo is this fine? I guess I should encrypt this value
             .sign(algorithm)
         val tokens = hashMapOf<String, String>( // todo - this sucks, use a class
             "access_token" to accessToken,
             "refresh_token" to refreshToken
         )
         response.contentType = MediaType.APPLICATION_JSON_VALUE
-        objectMapper.writeValue(response.outputStream, tokens)
+        JsonUtils.objectMapper.writeValue(response.outputStream, tokens)
     }
 
     companion object {
-        private const val ACCESS_TOKEN_VALIDITY_MINUTES: Long = 10
-        private const val REFRESH_TOKEN_VALIDITY_MINUTES: Long = 30
+        const val ACCESS_TOKEN_VALIDITY_MINUTES: Long = 10
+        const val REFRESH_TOKEN_VALIDITY_MINUTES: Long = 30
     }
 }

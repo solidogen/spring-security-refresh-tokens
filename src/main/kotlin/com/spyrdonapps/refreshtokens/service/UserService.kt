@@ -3,8 +3,8 @@ package com.spyrdonapps.refreshtokens.service
 import com.spyrdonapps.refreshtokens.domain.Role
 import com.spyrdonapps.refreshtokens.domain.User
 import org.springframework.security.core.userdetails.User as SpringSecUser
-import com.spyrdonapps.refreshtokens.repo.RoleRepo
-import com.spyrdonapps.refreshtokens.repo.UserRepo
+import com.spyrdonapps.refreshtokens.repository.RoleRepository
+import com.spyrdonapps.refreshtokens.repository.UserRepository
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -24,31 +24,31 @@ interface UserService {
 @Service
 @Transactional
 class DefaultUserService(
-    private val userRepo: UserRepo,
-    private val roleRepo: RoleRepo,
+    private val userRepository: UserRepository,
+    private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder
 ) : UserService, UserDetailsService {
 
     override fun saveUser(user: User): User {
         user.password = passwordEncoder.encode(user.password)
-        return userRepo.save(user)
+        return userRepository.save(user)
     }
 
-    override fun saveRole(role: Role): Role = roleRepo.save(role)
+    override fun saveRole(role: Role): Role = roleRepository.save(role)
 
     override fun addRoleToUser(username: String, roleName: String) {
-        val user = userRepo.findByUsername(username) ?: error("No user with username: $username")
-        val role = roleRepo.findByName(roleName) ?: error("No role with name: $roleName")
+        val user = userRepository.findByUsername(username) ?: error("No user with username: $username")
+        val role = roleRepository.findByName(roleName) ?: error("No role with name: $roleName")
         user.roles.add(role)
     }
 
-    override fun getUser(username: String): User? = userRepo.findByUsername(username)
+    override fun getUser(username: String): User? = userRepository.findByUsername(username)
 
-    override fun getUsers(): List<User> = userRepo.findAll()
+    override fun getUsers(): List<User> = userRepository.findAll()
 
     @OptIn(ExperimentalStdlibApi::class)
     override fun loadUserByUsername(username: String): UserDetails {
-        val user = userRepo.findByUsername(username)
+        val user = userRepository.findByUsername(username)
             ?: throw UsernameNotFoundException("No user with username: $username")
         val authorities: List<SimpleGrantedAuthority> = buildList {
             user.roles.forEach { role -> add(SimpleGrantedAuthority(role.name)) }
