@@ -37,7 +37,7 @@ class CustomAuthenticationFilter(authenticationManager: AuthenticationManager) :
         authentication: Authentication
     ) {
         val user = authentication.principal as User
-        val algorithm = Algorithm.HMAC256("secret".toByteArray()) // encrypted etc
+        val algorithm = JwtUtils.algorithm
         val accessToken = JWT.create()
             .withSubject(user.username)
             .withExpiresAt(Instant.now().plus(Duration.ofMinutes(ACCESS_TOKEN_VALIDITY_MINUTES)).let { Date.from(it) })
@@ -50,7 +50,7 @@ class CustomAuthenticationFilter(authenticationManager: AuthenticationManager) :
             .withIssuer(request.requestURL.toString())
             .withClaim("roles", user.authorities.map { it.authority })
             .sign(algorithm)
-        val tokens = hashMapOf<String, String>(
+        val tokens = hashMapOf<String, String>( // todo - this sucks, use a class
             "access_token" to accessToken,
             "refresh_token" to refreshToken
         )
